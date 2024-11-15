@@ -1,0 +1,30 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+html {
+  font-size: 1rem;
+  font-family: Host Grotesk, sans-serif;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  -ms-overflow-style: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+input[type=number] {
+  -moz-appearance: textfield;
+}
