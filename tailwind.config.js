@@ -9,6 +9,9 @@ export default {
       size: {
         4.5: "1.125rem",
       },
+      colors: {
+        brand: "#d3ed17",
+      },
     },
   },
   plugins: [],
