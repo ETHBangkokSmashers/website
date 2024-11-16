@@ -178,7 +178,7 @@ const animals = [
   "Bison",
 ]
 
-export function generateUsername(address: `0x${string}`) {
+export function generateUsername(address: any) {
   const hash = keccak256(address)
   const randomIndex = parseInt(hash.slice(0, 8), 16) % adjectives.length
   const adjective = adjectives[randomIndex]

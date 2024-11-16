@@ -1,39 +1,9 @@
-import { Link, useParams } from "react-router-dom"
+import { useParams } from "react-router-dom"
 import Avatar from "boring-avatars"
 import { useEncAccount } from "@/hooks/useFullAccount"
-
-function Order({ isMe }: { isMe: boolean }) {
-  return (
-    <div className="rounded-3xl border border-zinc-300 bg-white p-6 transition hover:border-zinc-400">
-      <div className="mb-6 flex items-center">
-        <Avatar className="mr-2 size-7" name="Margaret Brent" variant="beam" />
-        <b className="mr-2">CatZilla</b> bets that
-      </div>
-      <div className="text-xl">
-        <b>BTC</b> will hit <b>$100,000</b> in 7 days
-      </div>
-      <div className="mt-6">
-        Current BTC price: <b>$97,000</b>{" "}
-        <span className="text-red-400">-$3,000</span>
-      </div>
-      <div className="mt-2">
-        Ends: <b>Nov 29, 2024</b>
-      </div>
-      {isMe && (
-        <div
-          className="mt-6 flex h-14 cursor-pointer items-center justify-center rounded-2xl bg-red-100 px-4 transition"
-          // onClick={() => {
-          //   if (!account.isConnected) {
-          //     connect({ connector: connectors[0] })
-          //   }
-          // }}
-        >
-          <div className="text-center text-lg text-red-500">Cancel</div>
-        </div>
-      )}
-    </div>
-  )
-}
+import Orders from "@/routes/profile/Orders"
+import { generateUsername } from "@/helpers/generateUsername"
+import { CoinsIcon, HandshakeIcon } from "lucide-react"
 
 export default function Profile() {
   const params = useParams()
@@ -43,16 +13,32 @@ export default function Profile() {
   const isMe = account.address === address
 
   return (
-    <div className="mx-auto max-w-[1024px]">
-      <div className="flex items-center">
-        <Avatar className="size-[100px]" name="Margaret Brent" variant="beam" />
+    <div className="grid grid-cols-[400px_auto] gap-16 px-5 pt-10">
+      <div className="self-start rounded-3xl border border-zinc-200 p-10 shadow-lg">
+        <div className="flex items-center">
+          <Avatar className="mr-6 size-[100px]" name={address} variant="beam" />
+          <div className="text-2xl font-medium">
+            {generateUsername(address)}
+          </div>
+        </div>
+        <div className="mt-10 grid grid-cols-2 gap-4">
+          <div className="rounded-2xl bg-zinc-100 p-4">
+            <div className="flex items-center">
+              <HandshakeIcon className="mr-2 size-5 flex-none" />
+              <div className="whitespace-nowrap">Deals</div>
+            </div>
+            <div className="mt-4 text-3xl">15</div>
+          </div>
+          <div className="rounded-2xl bg-lime-200 p-4">
+            <div className="flex items-center">
+              <CoinsIcon className="mr-2 size-5 flex-none" />
+              <div className="whitespace-nowrap">Profit</div>
+            </div>
+            <div className="mt-4 text-3xl">+$1,000</div>
+          </div>
+        </div>
       </div>
-      <div className="">Orders</div>
-      <div className="grid gap-3 md:grid-cols-2 md:gap-4 lg:grid-cols-3 lg:gap-6">
-        {new Array(5).fill(null).map((_, index) => {
-          return <Order key={index} isMe={isMe} />
-        })}
-      </div>
+      <Orders />
     </div>
   )
 }

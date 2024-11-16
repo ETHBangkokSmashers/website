@@ -49,8 +49,9 @@ export type Database = {
           owner: string
           owner_signature: string
           settled_price: number | null
+          target_ticker: string
           target_price: number
-          token: string
+          source_ticker: string
           nonce: number
         }
         Insert: {
@@ -67,8 +68,9 @@ export type Database = {
           owner: string
           owner_signature: string
           settled_price?: number | null
+          target_ticker: string
           target_price: number
-          token: string
+          source_ticker: string
           nonce: number
         }
         Update: {
@@ -85,8 +87,9 @@ export type Database = {
           owner?: string
           owner_signature?: string
           settled_price?: number | null
+          target_ticker?: string
           target_price?: number
-          token?: string
+          source_ticker?: string
           nonce: number
         }
         Relationships: []

@@ -11,6 +11,7 @@ import { DynamicContextProvider } from "@dynamic-labs/sdk-react-core"
 import { EthereumWalletConnectors } from "@dynamic-labs/ethereum"
 import { WagmiProvider, createConfig } from "wagmi"
 import {
+  sepolia,
   mainnet,
   polygon,
   // flow,
@@ -48,6 +49,7 @@ dayjs.extend(relativeTime)
 const config = createConfig({
   multiInjectedProviderDiscovery: false,
   chains: [
+    sepolia,
     mainnet,
     polygon,
     // flow,
@@ -65,6 +67,7 @@ const config = createConfig({
     linea,
   ],
   transports: {
+    [sepolia.id]: http(),
     [mainnet.id]: http(),
     [polygon.id]: http(),
     // [flow.id]: http(),
