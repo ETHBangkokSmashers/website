@@ -24,6 +24,40 @@ function Order({ data, isMy }: { data: Tables<"orders">; isMy: boolean }) {
   )
 }
 
+const useForeignOrders = (address: string) => {
+  const queryFn = async () => {
+    const res = await supabase
+      .from("orders")
+      .select("*")
+      .eq("opponent", address.toLowerCase())
+      .returns<Tables<"orders">[]>()
+
+    return res.data
+  }
+
+  return useQuery({
+    queryKey: ["profile-foreign-orders", address],
+    queryFn,
+  })
+}
+
+const useCreatedOrders = (address: string) => {
+  const queryFn = async () => {
+    const res = await supabase
+      .from("orders")
+      .select("*")
+      .eq("owner", address.toLowerCase())
+      .returns<Tables<"orders">[]>()
+
+    return res.data
+  }
+
+  return useQuery({
+    queryKey: ["profile-created-orders", address],
+    queryFn,
+  })
+}
+
 export default function Orders() {
   const params = useParams()
   const account = useEncAccount()
@@ -31,58 +65,58 @@ export default function Orders() {
   const address = params.address as string
   const isMy = account.address === address
 
-  const queryFn = async () => {
-    const res = await supabase
-      .from("orders")
-      .select("*")
-      .eq("owner", address)
-      .returns<Tables<"orders">[]>()
+  const profileOrdersQuery = useCreatedOrders(address)
+  const foreignOrdersQuery = useForeignOrders(address)
 
-    return res.data
-  }
+  const isFetching =
+    profileOrdersQuery.isFetching || foreignOrdersQuery.isFetching
 
-  const query = useQuery({
-    queryKey: ["profile-orders", address],
-    queryFn,
-  })
+  const orders = [
+    ...(profileOrdersQuery.data || []),
+    ...(foreignOrdersQuery.data || []),
+  ]
 
-  const openedOrders = []
-  const otherOrders = []
+  const activeDeals: Tables<"orders">[] = []
+  const openedOrders: Tables<"orders">[] = []
 
-  query.data?.forEach((order) => {
-    if (1) {
-      openedOrders.push(order)
+  orders.forEach((order) => {
+    if (order.opponent) {
+      activeDeals.push(order)
     } else {
-      otherOrders.push(order)
+      openedOrders.push(order)
     }
   })
 
   return (
-    <div>
-      {!!openedOrders.length && (
+    <div className="pb-10 pr-5">
+      {!!activeDeals?.length && (
         <div className="mb-10">
-          <div className="mb-6 text-3xl font-semibold">Active Deals</div>
-          <div className="grid gap-3 pb-10 md:grid-cols-2 md:gap-4 lg:grid-cols-3 lg:gap-6">
-            {query.data?.map((item, index) => {
+          <div className="text-3xl font-semibold">Active Deals</div>
+          <div className="mt-1 text-lg">
+            Transactions in which I take part: those that I created and those in
+            which I decided to put “against”.
+          </div>
+          <div className="mt-6 grid gap-3 pb-10 md:grid-cols-2 md:gap-4 lg:grid-cols-2 lg:gap-6">
+            {activeDeals.map((item, index) => {
               return <Order key={index} data={item} isMy={isMy} />
             })}
           </div>
         </div>
       )}
-      <div className="mb-6 text-3xl font-semibold">Deals</div>
-      {!query.isFetching && !query.data?.length ? (
+      <div className="mb-6 text-3xl font-semibold">Opened Orders</div>
+      {!isFetching && !openedOrders.length ? (
         <div className="flex h-[400px] items-center justify-center rounded-3xl bg-zinc-100">
           <div className="text-2xl opacity-60">Nothing to show</div>
         </div>
       ) : (
-        <div className="grid gap-3 pb-10 md:grid-cols-2 md:gap-4 lg:grid-cols-3 lg:gap-6">
-          {query.isFetching
+        <div className="grid gap-3 pb-10 md:grid-cols-2 md:gap-4 lg:grid-cols-2 lg:gap-6">
+          {isFetching
             ? new Array(6).fill(null).map((_, index) => {
                 return (
                   <div key={index} className="bone h-[280px] rounded-3xl" />
                 )
               })
-            : query.data?.map((item, index) => {
+            : openedOrders.map((item, index) => {
                 return <Order key={index} data={item} isMy={isMy} />
               })}
         </div>

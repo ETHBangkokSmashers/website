@@ -41,8 +41,8 @@ export type Database = {
           created_at: string | null
           direction: number
           entry_price: number
-          deadline: string
-          expires_at: string
+          deadline: number
+          expires_at: number
           id: number
           opponent: string | null
           opponent_signature: string | null
@@ -52,6 +52,7 @@ export type Database = {
           target_ticker: string
           target_price: number
           source_ticker: string
+          data_source_id: number
           nonce: number
         }
         Insert: {
@@ -60,8 +61,8 @@ export type Database = {
           created_at?: string | null
           direction: number
           entry_price: number
-          deadline: string
-          expires_at: string
+          deadline: number
+          expires_at: number
           id?: number
           opponent?: string | null
           opponent_signature?: string | null
@@ -71,6 +72,7 @@ export type Database = {
           target_ticker: string
           target_price: number
           source_ticker: string
+          data_source_id: number
           nonce: number
         }
         Update: {
@@ -79,8 +81,8 @@ export type Database = {
           created_at?: string | null
           direction?: number
           entry_price?: number
-          deadline?: string
-          expires_at?: string
+          deadline?: number
+          expires_at?: number
           id?: number
           opponent?: string | null
           opponent_signature?: string | null
@@ -90,7 +92,8 @@ export type Database = {
           target_ticker?: string
           target_price?: number
           source_ticker?: string
-          nonce: number
+          data_source_id?: number
+          nonce?: number
         }
         Relationships: []
       }

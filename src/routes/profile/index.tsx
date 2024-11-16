@@ -14,14 +14,18 @@ export default function Profile() {
 
   return (
     <div className="grid grid-cols-[400px_auto] gap-16 px-5 pt-10">
-      <div className="self-start rounded-3xl border border-zinc-200 p-10 shadow-lg">
-        <div className="flex items-center">
-          <Avatar className="mr-6 size-[100px]" name={address} variant="beam" />
+      <div className="self-start rounded-3xl border border-zinc-200 p-3 shadow-lg">
+        <div className="flex items-center p-5">
+          <Avatar
+            className="mr-6 size-[100px]"
+            name={address.toLowerCase()}
+            variant="beam"
+          />
           <div className="text-2xl font-medium">
             {generateUsername(address)}
           </div>
         </div>
-        <div className="mt-10 grid grid-cols-2 gap-4">
+        <div className="mt-4 grid grid-cols-2 gap-2">
           <div className="rounded-2xl bg-zinc-100 p-4">
             <div className="flex items-center">
               <HandshakeIcon className="mr-2 size-5 flex-none" />

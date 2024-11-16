@@ -7,9 +7,9 @@ import {
 } from "wagmi"
 import { erc20ABI } from "@/helpers/erc20ABI"
 import { useRef, useState } from "react"
-import { parseUnits } from "viem"
 
-const MAX_UINT_256 = parseUnits("340282366920938463463", 0)
+const MAX_UINT_256 =
+  115792089237316195423570985008687907853269984665640564039457584007913129639935n
 
 export const useApprove = ({
   tokenAddress,
@@ -51,7 +51,7 @@ export const useApprove = ({
     allowanceTx.data !== undefined &&
     allowanceTx.data < requiredAmount
 
-  const approve = async () => {
+  const approve = async (cb?: () => void) => {
     if (
       !publicClient ||
       !account.isConnected ||
@@ -78,6 +78,7 @@ export const useApprove = ({
       })
 
       await allowanceTx.refetch()
+      cb?.()
     } catch (err) {
       console.error(err)
     }

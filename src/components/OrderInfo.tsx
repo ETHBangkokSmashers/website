@@ -1,4 +1,5 @@
 import Avatar from "boring-avatars"
+import { Link } from "react-router-dom"
 import { generateUsername } from "@/helpers/generateUsername"
 import dayjs from "dayjs"
 import { Tables } from "@/helpers/supabase.types"
@@ -7,31 +8,39 @@ export default function OrderInfo({ data }: { data: Tables<"orders"> }) {
   return (
     <>
       <div className="mb-6 flex items-center">
-        <Avatar className="mr-2 size-7" name={data.owner} variant="beam" />
-        <span className="mr-1 font-semibold">
+        <Link to={`/profile/${data.owner}`}>
+          <Avatar className="mr-2 size-7" name={data.owner} variant="beam" />
+        </Link>
+        <Link
+          className="mr-1 font-semibold hover:underline"
+          to={`/profile/${data.owner}`}
+        >
           {generateUsername(data.owner)}
-        </span>{" "}
+        </Link>{" "}
         bets that
       </div>
-      <div className="text-xl">
-        <b>BTC</b> will hit <b>${data.target_price.toLocaleString()}</b>
+      <div className="text-3xl">
+        <span className="font-semibold">BTC</span> will hit{" "}
+        <span className="font-semibold">
+          ${data.target_price.toLocaleString()}
+        </span>
         <br />
-        in {dayjs.utc(data.expires_at).diff(dayjs.utc(), "days")} days
+        in {dayjs(data.expires_at * 1000).diff(dayjs(), "days")} days
       </div>
       <div className="mt-6">
-        Current BTC price: <b>$97,000</b>{" "}
-        <span className="text-red-400">-$3,000</span>
+        Current BTC price: <span className="font-semibold">$97,000</span>{" "}
+        <span className="font-semibold text-red-400">-$3,000</span>
       </div>
       <div className="mt-6">
         Created:{" "}
         <span className="font-semibold">
-          {dayjs.utc(data.created_at).format("MMM DD YYYY HH:mm")}
+          {dayjs(data.created_at).format("MMM DD YYYY HH:mm")}
         </span>
       </div>
       <div className="mt-2">
         Ends:{" "}
         <span className="font-semibold">
-          {dayjs.utc(data.expires_at).format("MMM DD YYYY HH:mm")}
+          {dayjs(data.expires_at * 1000).format("MMM DD YYYY HH:mm")}
         </span>
       </div>
     </>

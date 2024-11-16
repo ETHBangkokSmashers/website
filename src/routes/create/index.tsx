@@ -13,10 +13,13 @@ import dayjs from "dayjs"
 import cx from "clsx"
 import Spinner from "@/components/Spinner"
 import { useApprove } from "@/hooks/useApprove"
+import { fireConfetti } from "@/helpers/fireConfetti"
+import { wait } from "@/helpers/wait"
+import { useNavigate } from "react-router-dom"
 
-const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000"
+export const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000"
 
-const TARGET_TOKENS = ["BTC", "ETH"]
+export const TARGET_TOKENS = ["BTC", "ETH"]
 const BET_TOKENS = ["USDC", "USDT"]
 const DIRECTIONS = ["above", "below"]
 const DURATIONS = ["3 min", "3 days", "1 week"]
@@ -77,6 +80,7 @@ function Selector2({
 }
 
 export default function Create() {
+  const navigate = useNavigate()
   const account = useAccount()
   const chains = useChains()
   const chainId = useChainId()
@@ -123,16 +127,17 @@ export default function Create() {
       setSubmitting(true)
 
       const nonce = getNonce()
-      const direction = 1
+      const directionNum = direction === "below" ? 0 : 1
       const entryPrice = 92000
       const targetPrice = 100000
-      const betAmount = 1000
+
       const rawBetAmount = parseUnits(
         betAmount.toFixed(betToken.decimals),
         betToken.decimals,
       )
-      const deadline = dayjs.utc().add(1, "days")
-      const expiresAt = dayjs.utc().add(7, "days")
+      const deadline = dayjs.utc().add(1, "days").unix()
+      const expiresAt = dayjs.utc().add(7, "days").unix()
+
       // TODO rewrite to safety variant
       const targetTokenId = TARGET_TOKENS.indexOf(targetTokenTicker) + 1
 
@@ -141,10 +146,16 @@ export default function Create() {
           name: "TradeEntry",
           version: "1",
           chainId,
-          verifyingContract: ZERO_ADDRESS,
+          verifyingContract: contractAddress,
         },
         types: {
-          OrderParams: [
+          Domain: [
+            { name: "name", type: "string" },
+            { name: "version", type: "string" },
+            { name: "chainId", type: "uint256" },
+            { name: "verifyingContract", type: "address" },
+          ],
+          TradeParams: [
             { name: "depositAsset", type: "address" },
             { name: "initiator", type: "address" },
             { name: "initiatorAmount", type: "uint256" },
@@ -152,24 +163,24 @@ export default function Create() {
             { name: "acceptorAmount", type: "uint256" },
             { name: "acceptionDeadline", type: "uint256" },
             { name: "expiry", type: "uint256" },
-            { name: "observationAsset", type: "uint32" },
+            { name: "observationAssetId", type: "uint32" },
             { name: "direction", type: "uint8" },
             { name: "price", type: "uint256" },
             { name: "dataSourceId", type: "uint8" },
             { name: "nonce", type: "uint256" },
           ],
         },
-        primaryType: "OrderParams",
+        primaryType: "TradeParams",
         message: {
           depositAsset: betToken.address,
           initiator: account.address!,
           initiatorAmount: rawBetAmount,
           acceptor: ZERO_ADDRESS,
           acceptorAmount: rawBetAmount,
-          acceptionDeadline: BigInt(String(deadline.unix())),
-          expiry: BigInt(String(expiresAt.unix())),
-          observationAsset: targetTokenId,
-          direction,
+          acceptionDeadline: BigInt(deadline),
+          expiry: BigInt(expiresAt),
+          observationAssetId: targetTokenId,
+          direction: directionNum,
           price: parseUnits(String(targetPrice), 18),
           dataSourceId: dataSource.sourceId,
           nonce: BigInt(nonce),
@@ -182,19 +193,24 @@ export default function Create() {
           {
             chain_id: chainId,
             bet_amount: rawBetAmount.toString(),
-            direction,
+            direction: directionNum,
             entry_price: entryPrice,
             target_price: targetPrice,
-            deadline: deadline.toISOString(),
-            expires_at: expiresAt.toISOString(),
+            deadline,
+            expires_at: expiresAt,
             owner: account.address!.toLowerCase(),
             owner_signature: signature,
             target_ticker: targetTokenTicker.toLowerCase(),
             source_ticker: betTokenTicker.toLowerCase(),
+            data_source_id: dataSource.sourceId,
             nonce,
           },
         ])
         .select()
+
+      await wait(1500)
+      fireConfetti()
+      navigate(`/profile/${account.address}`)
     } catch (err) {
       console.error(err)
     }
@@ -261,7 +277,9 @@ export default function Create() {
                 "!cursor-default": isApproving,
               },
             )}
-            onClick={approve}
+            onClick={() => {
+              approve()
+            }}
           >
             {isApproving && (
               <Spinner className="fill-brand mr-4 size-6 text-white/30" />
@@ -279,6 +297,9 @@ export default function Create() {
             )}
             onClick={submit}
           >
+            {isSubmitting && (
+              <Spinner className="fill-brand mr-4 size-6 text-white/30" />
+            )}
             <div className="text-center text-xl font-medium text-white">
               2. Submit the Order
             </div>

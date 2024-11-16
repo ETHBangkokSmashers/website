@@ -21,8 +21,8 @@ export const chainConfig = {
     tradeEntryAddress: "0xffE9eea7627C5f268227A12c72393fcA71cA76FB",
     tokens: {
       usdc: {
-        address: "0xf08a50178dfcde18524640ea6618a1f965821715",
-        decimals: 6,
+        address: "0x5d6074b2B8F83E819b1C0957AD4497F0C9e01A21",
+        decimals: 18,
       },
       usdt: {
         address: "0x0093b27da6a4a611f31e5c00a89897e874132e66",
