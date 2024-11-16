@@ -54,6 +54,7 @@ export type Database = {
           source_ticker: string
           data_source_id: number
           nonce: number
+          is_claimed: boolean
         }
         Insert: {
           bet_amount: string
@@ -74,6 +75,7 @@ export type Database = {
           source_ticker: string
           data_source_id: number
           nonce: number
+          is_claimed?: boolean
         }
         Update: {
           bet_amount?: string
@@ -94,6 +96,7 @@ export type Database = {
           source_ticker?: string
           data_source_id?: number
           nonce?: number
+          is_claimed?: boolean
         }
         Relationships: []
       }

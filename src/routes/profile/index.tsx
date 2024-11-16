@@ -7,20 +7,16 @@ import { CoinsIcon, HandshakeIcon } from "lucide-react"
 
 export default function Profile() {
   const params = useParams()
-  const address = params.address as string
+  const address = (params.address as string).toLowerCase()
 
   const account = useEncAccount()
-  const isMe = account.address === address
+  const isMyProfile = account.address?.toLowerCase() === address
 
   return (
     <div className="grid grid-cols-[400px_auto] gap-16 px-5 pt-10">
       <div className="self-start rounded-3xl border border-zinc-200 p-3 shadow-lg">
         <div className="flex items-center p-5">
-          <Avatar
-            className="mr-6 size-[100px]"
-            name={address.toLowerCase()}
-            variant="beam"
-          />
+          <Avatar className="mr-6 size-[100px]" name={address} variant="beam" />
           <div className="text-2xl font-medium">
             {generateUsername(address)}
           </div>

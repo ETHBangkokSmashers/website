@@ -135,8 +135,27 @@ export default function Create() {
         betAmount.toFixed(betToken.decimals),
         betToken.decimals,
       )
-      const deadline = dayjs.utc().add(1, "days").unix()
-      const expiresAt = dayjs.utc().add(7, "days").unix()
+
+      let expNum: number
+      let expStr: string
+
+      if (duration === "3 min") {
+        expNum = 3
+        expStr = "min"
+      } else if (duration === "3 days") {
+        expNum = 3
+        expStr = "days"
+      } else {
+        expNum = 1
+        expStr = "week"
+      }
+
+      const deadline = dayjs.utc().add(10, "days").unix()
+
+      const expiresAt = dayjs
+        .utc()
+        .add(expNum, expStr as any)
+        .unix()
 
       // TODO rewrite to safety variant
       const targetTokenId = TARGET_TOKENS.indexOf(targetTokenTicker) + 1

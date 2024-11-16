@@ -1,25 +1,344 @@
 import supabase, { Tables } from "@/helpers/supabase"
-import { useQuery } from "@tanstack/react-query"
+import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { useParams } from "react-router-dom"
 import { useEncAccount } from "@/hooks/useFullAccount"
 import OrderInfo from "@/components/OrderInfo"
+import cx from "clsx"
+import dayjs from "dayjs"
+import { useEffect, useState } from "react"
+import Spinner from "@/components/Spinner"
+import { wagmiConfig } from "@/helpers/wagmiConfig"
+import { usePublicClient, useReadContract, useWriteContract } from "wagmi"
+import { readContract } from "@wagmi/core"
+import tradeEntryABI from "@/helpers/tradeEntryABI"
+import { numberToHex, padHex, formatUnits, parseUnits } from "viem"
+import { wait } from "@/helpers/wait"
+import { fireConfetti } from "@/helpers/fireConfetti"
+import { chainConfig } from "@/helpers/chainConfig"
+import { ZERO_ADDRESS, TARGET_TOKENS } from "@/routes/create"
+import eacaAggregatorProxy from "@/helpers/eacaAggregatorProxy"
 
-function Order({ data, isMy }: { data: Tables<"orders">; isMy: boolean }) {
+const useOrderInfo = ({
+  chainId,
+  observationAssetId,
+  expiresAt,
+}: {
+  chainId: number
+  observationAssetId: number
+  expiresAt: number
+}) => {
+  const contractAddress = chainConfig[chainId].tradeEntryAddress!
+
+  const feedAddressTx = useReadContract({
+    chainId,
+    address: contractAddress,
+    abi: tradeEntryABI,
+    functionName: "chainlinkAssetPriceFeeds",
+    args: [observationAssetId],
+  })
+
+  const feedTx = useReadContract({
+    chainId,
+    address: feedAddressTx.data,
+    abi: eacaAggregatorProxy,
+    functionName: "latestRoundData",
+    query: {
+      enabled: !!feedAddressTx.data,
+    },
+  })
+
+  const [roundId, setRoundId] = useState<bigint>()
+  const [targetTokenSettledPrice, setSettledPrice] = useState<number>()
+  const [_isFetching, setFetching] = useState(false)
+
+  const fetchRound = async () => {
+    try {
+      setFetching(true)
+
+      // ATTN targetTokenPrice has 8 decimals!
+      let [roundId, targetTokenSettledPrice, , timestamp] = feedTx.data!
+
+      while (timestamp > expiresAt) {
+        roundId--
+        ;[, targetTokenSettledPrice, , timestamp] = await readContract(
+          wagmiConfig,
+          {
+            chainId: chainId as any,
+            address: feedAddressTx.data!,
+            abi: eacaAggregatorProxy,
+            functionName: "getRoundData",
+            args: [roundId],
+          },
+        )
+      }
+
+      if (roundId) {
+        setRoundId(roundId)
+      }
+
+      if (targetTokenSettledPrice) {
+        setSettledPrice(+formatUnits(targetTokenSettledPrice, 8))
+      }
+    } catch (err) {
+      console.error(err)
+    }
+
+    setFetching(false)
+  }
+
+  useEffect(() => {
+    if (feedTx.data && !targetTokenSettledPrice) {
+      fetchRound()
+    }
+  }, [!!feedTx.data])
+
+  return {
+    isFetching: feedAddressTx.isFetching || feedTx.isFetching || _isFetching,
+    roundId,
+    targetTokenSettledPrice,
+  }
+}
+
+function Button({
+  children,
+  className,
+  isDisabled,
+  isLoading,
+  onClick,
+}: {
+  children: any
+  className: string
+  isDisabled?: boolean
+  isLoading?: boolean
+  onClick?(): void
+}) {
+  return (
+    <div
+      className={cx(
+        "flex h-14 items-center justify-center rounded-2xl px-4 transition",
+        className,
+        {
+          "cursor-not-allowed opacity-20": isDisabled,
+        },
+      )}
+      onClick={onClick}
+    >
+      {isLoading && (
+        <Spinner className="mr-4 size-6 fill-black text-black/20" />
+      )}
+      <div className="text-center text-lg font-medium">{children}</div>
+    </div>
+  )
+}
+
+function ClaimButton({
+  order,
+  roundId,
+}: {
+  order: Tables<"orders">
+  roundId: bigint
+}) {
+  const params = useParams()
+  const profileAddress = (params.address as string).toLowerCase()
+
+  const queryClient = useQueryClient()
+  const publicClient = usePublicClient()
+  const { writeContractAsync } = useWriteContract()
+  const [isSubmitting, setSubmitting] = useState(false)
+
+  const betToken =
+    chainConfig[order.chain_id].tokens[order.source_ticker.toLowerCase()]!
+
+  const contractAddress = chainConfig[order.chain_id].tradeEntryAddress!
+
+  const isButtonDisabled = !publicClient
+
+  const claim = async () => {
+    if (!publicClient || isSubmitting) {
+      return
+    }
+
+    try {
+      setSubmitting(true)
+
+      // TODO rewrite to safety variant
+      const targetTokenId =
+        TARGET_TOKENS.map((ticker) => {
+          return ticker.toLowerCase()
+        }).indexOf(order.target_ticker) + 1
+
+      const hexString = numberToHex(roundId)
+      const roundHex = padHex(hexString, { size: 32 })
+
+      const txHash = await writeContractAsync({
+        address: contractAddress,
+        abi: tradeEntryABI,
+        functionName: "settleTrade",
+        args: [
+          {
+            depositAsset: betToken.address,
+            initiator: order.owner as `0x${string}`,
+            initiatorAmount: BigInt(order.bet_amount),
+            acceptor: ZERO_ADDRESS,
+            acceptorAmount: BigInt(order.bet_amount), // TODO change
+            acceptionDeadline: BigInt(order.deadline),
+            expiry: BigInt(order.expires_at),
+            observationAssetId: targetTokenId,
+            direction: order.direction,
+            price: parseUnits(String(order.target_price), 18),
+            dataSourceId: order.data_source_id,
+            nonce: BigInt(order.nonce),
+          },
+          roundHex,
+        ],
+      })
+
+      const receipt = await publicClient.waitForTransactionReceipt({
+        hash: txHash,
+      })
+
+      const { data, error } = await supabase
+        .from("orders")
+        .update({ is_claimed: true })
+        .eq("id", order.id)
+        .select()
+
+      try {
+        queryClient.setQueryData<Tables<"orders">[]>(
+          ["profile-active-orders", profileAddress],
+          (orders) => {
+            if (!orders) return
+
+            return orders.map((item) => {
+              if (item.id === order.id) {
+                return {
+                  ...item,
+                  is_claimed: true,
+                }
+              }
+
+              return item
+            })
+          },
+        )
+      } catch {}
+
+      await wait(1500)
+      fireConfetti()
+    } catch (err) {
+      console.error(err)
+    }
+
+    setSubmitting(false)
+  }
+
+  return (
+    <Button
+      className="bg-brand cursor-pointer"
+      isDisabled={isButtonDisabled}
+      isLoading={false}
+      onClick={() => {
+        claim()
+      }}
+    >
+      Claim
+    </Button>
+  )
+}
+
+function SettleButton({
+  order,
+  isMyOrder,
+}: {
+  order: Tables<"orders">
+  isMyOrder: boolean
+}) {
+  // TODO rewrite to safety variant
+  const targetTokenId =
+    TARGET_TOKENS.map((ticker) => {
+      return ticker.toLowerCase()
+    }).indexOf(order.target_ticker) + 1
+
+  const { isFetching, roundId, targetTokenSettledPrice } = useOrderInfo({
+    chainId: order.chain_id,
+    observationAssetId: targetTokenId,
+    expiresAt: order.expires_at,
+  })
+
+  let isOrderWin: boolean | undefined
+
+  if (targetTokenSettledPrice !== undefined) {
+    if (order.direction === 0) {
+      isOrderWin = order.target_price < targetTokenSettledPrice
+    } else {
+      isOrderWin = order.target_price > targetTokenSettledPrice
+    }
+  }
+
+  if (isFetching) {
+    return <div className="bone h-14 rounded-2xl"></div>
+  }
+
+  const isWin = isOrderWin && isMyOrder
+
+  if (isWin) {
+    return <ClaimButton order={order} roundId={roundId!} />
+  }
+
+  return <Button className="!cursor-default bg-red-100">Lost</Button>
+}
+
+function CancelButton({ order }: { order: Tables<"orders"> }) {
+  const publicClient = usePublicClient()
+  const { writeContractAsync } = useWriteContract()
+  const [isSubmitting, setSubmitting] = useState(false)
+
+  const cancel = async () => {
+    try {
+      setSubmitting(true)
+    } catch (err) {
+      console.error(err)
+    }
+
+    setSubmitting(false)
+  }
+
+  return (
+    <Button className="bg-red-100" isLoading={false}>
+      Cancel
+    </Button>
+  )
+}
+
+function Order({
+  data,
+  isMyOrder,
+  isMyProfile,
+}: {
+  data: Tables<"orders">
+  isMyOrder: boolean
+  isMyProfile: boolean
+}) {
+  const isExpired = dayjs().isAfter(dayjs(data.expires_at * 1000))
+  const isCancelable = !isExpired && !data.opponent
+
   return (
     <div className="rounded-3xl border border-zinc-300 bg-white p-6 transition hover:border-zinc-400">
       <OrderInfo data={data} />
-      {isMy && (
-        <div
-          className="mt-6 flex h-14 cursor-pointer items-center justify-center rounded-2xl bg-red-100 px-4 transition"
-          // onClick={() => {
-          //   if (!account.isConnected) {
-          //     connect({ connector: connectors[0] })
-          //   }
-          // }}
-        >
-          <div className="text-center text-lg text-red-500">Cancel</div>
-        </div>
-      )}
+      <div className="mt-6 h-14">
+        {isMyProfile &&
+          (isCancelable ? (
+            <CancelButton order={data} />
+          ) : isExpired ? (
+            data.is_claimed ? (
+              <Button className="bg-brand/30 !cursor-default">Claimed</Button>
+            ) : (
+              <SettleButton order={data} isMyOrder={isMyOrder} />
+            )
+          ) : (
+            <Button className="!cursor-default bg-blue-200">Pending</Button>
+          ))}
+      </div>
     </div>
   )
 }
@@ -36,7 +355,7 @@ const useForeignOrders = (address: string) => {
   }
 
   return useQuery({
-    queryKey: ["profile-foreign-orders", address],
+    queryKey: ["profile-active-orders", address],
     queryFn,
   })
 }
@@ -62,8 +381,8 @@ export default function Orders() {
   const params = useParams()
   const account = useEncAccount()
 
-  const address = params.address as string
-  const isMy = account.address === address
+  const address = (params.address as string).toLowerCase()
+  const isMyProfile = account.address?.toLowerCase() === address
 
   const profileOrdersQuery = useCreatedOrders(address)
   const foreignOrdersQuery = useForeignOrders(address)
@@ -98,7 +417,17 @@ export default function Orders() {
           </div>
           <div className="mt-6 grid gap-3 pb-10 md:grid-cols-2 md:gap-4 lg:grid-cols-2 lg:gap-6">
             {activeDeals.map((item, index) => {
-              return <Order key={index} data={item} isMy={isMy} />
+              const isMyOrder =
+                item.owner.toLowerCase() === account.address?.toLowerCase()
+
+              return (
+                <Order
+                  key={index}
+                  data={item}
+                  isMyOrder={isMyOrder}
+                  isMyProfile={isMyProfile}
+                />
+              )
             })}
           </div>
         </div>
@@ -117,7 +446,17 @@ export default function Orders() {
                 )
               })
             : openedOrders.map((item, index) => {
-                return <Order key={index} data={item} isMy={isMy} />
+                const isMyOrder =
+                  item.owner.toLowerCase() === account.address?.toLowerCase()
+
+                return (
+                  <Order
+                    key={index}
+                    data={item}
+                    isMyOrder={isMyOrder}
+                    isMyProfile={isMyProfile}
+                  />
+                )
               })}
         </div>
       )}

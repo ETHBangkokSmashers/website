@@ -26,7 +26,6 @@ export default function AcceptOrderButton({
     chainConfig[order.chain_id].tokens[order.source_ticker.toLowerCase()]!
 
   const betAmount = +formatUnits(BigInt(order.bet_amount), betToken.decimals)
-
   const contractAddress = chainConfig[order.chain_id].tradeEntryAddress!
 
   const { allowanceTx, isApproveRequired, approve, isApproving } = useApprove({
@@ -39,14 +38,14 @@ export default function AcceptOrderButton({
 
   const [isSubmitting, setSubmitting] = useState(false)
 
+  const isButtonDisabled =
+    !publicClient ||
+    !account.address ||
+    isApproveRequired ||
+    allowanceTx.data === undefined
+
   const submit = async () => {
-    if (
-      !publicClient ||
-      !account.address ||
-      isApproveRequired ||
-      allowanceTx.data === undefined ||
-      isSubmitting
-    ) {
+    if (isButtonDisabled || isSubmitting) {
       return
     }
 
@@ -91,7 +90,7 @@ export default function AcceptOrderButton({
 
       const { data, error } = await supabase
         .from("orders")
-        .update({ opponent: account.address.toLowerCase() })
+        .update({ opponent: account.address!.toLowerCase() })
         .eq("id", order.id)
         .select()
 
@@ -113,7 +112,9 @@ export default function AcceptOrderButton({
     <div
       className={cx(
         "bg-brand mt-6 flex h-14 cursor-pointer select-none items-center justify-center rounded-2xl px-4 transition",
-        {},
+        {
+          "cursor-not-allowed opacity-20": isButtonDisabled,
+        },
       )}
       onClick={() => {
         if (isApproveRequired) {
