@@ -10,7 +10,23 @@ import { DynamicWagmiConnector } from "@dynamic-labs/wagmi-connector"
 import { DynamicContextProvider } from "@dynamic-labs/sdk-react-core"
 import { EthereumWalletConnectors } from "@dynamic-labs/ethereum"
 import { WagmiProvider, createConfig } from "wagmi"
-import { mainnet, polygon, optimism, base } from "viem/chains"
+import {
+  mainnet,
+  polygon,
+  // flow,
+  bitkub,
+  kinto,
+  worldchain,
+  arbitrum,
+  scroll,
+  mantle,
+  gnosis,
+  hedera,
+  celo,
+  base,
+  zircuit,
+  linea,
+} from "viem/chains"
 import { http } from "viem"
 
 import ReactDOM from "react-dom/client"
@@ -24,18 +40,46 @@ import {
 import Layout from "@/components/Layout"
 import HomePage from "@/routes/home"
 import ProfilePage from "@/routes/profile"
+import CreatePage from "@/routes/create"
 
 dayjs.extend(utc)
 dayjs.extend(relativeTime)
 
 const config = createConfig({
   multiInjectedProviderDiscovery: false,
-  chains: [mainnet, polygon, optimism, base],
+  chains: [
+    mainnet,
+    polygon,
+    // flow,
+    bitkub,
+    kinto,
+    worldchain,
+    arbitrum,
+    scroll,
+    mantle,
+    gnosis,
+    hedera,
+    celo,
+    base,
+    zircuit,
+    linea,
+  ],
   transports: {
     [mainnet.id]: http(),
     [polygon.id]: http(),
-    [optimism.id]: http(),
+    // [flow.id]: http(),
+    [bitkub.id]: http(),
+    [kinto.id]: http(),
+    [worldchain.id]: http(),
+    [arbitrum.id]: http(),
+    [scroll.id]: http(),
+    [mantle.id]: http(),
+    [gnosis.id]: http(),
+    [hedera.id]: http(),
+    [celo.id]: http(),
     [base.id]: http(),
+    [zircuit.id]: http(),
+    [linea.id]: http(),
   },
 })
 
@@ -46,6 +90,7 @@ const router = createBrowserRouter(
     <Route path="/" element={<Layout />}>
       <Route index element={<HomePage />} />
       <Route path="/profile/:address" element={<ProfilePage />} />
+      <Route path="/create" element={<CreatePage />} />
     </Route>,
   ),
 )

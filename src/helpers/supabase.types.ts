@@ -37,10 +37,11 @@ export type Database = {
       orders: {
         Row: {
           bet_amount: string
-          created_at: string
+          chain_id: number
+          created_at: string | null
           direction: number
           entry_price: number
-          expected_price: number
+          deadline: string
           expires_at: string
           id: number
           opponent: string | null
@@ -48,14 +49,17 @@ export type Database = {
           owner: string
           owner_signature: string
           settled_price: number | null
+          target_price: number
           token: string
+          nonce: number
         }
         Insert: {
           bet_amount: string
-          created_at?: string
+          chain_id: number
+          created_at?: string | null
           direction: number
           entry_price: number
-          expected_price: number
+          deadline: string
           expires_at: string
           id?: number
           opponent?: string | null
@@ -63,14 +67,17 @@ export type Database = {
           owner: string
           owner_signature: string
           settled_price?: number | null
+          target_price: number
           token: string
+          nonce: number
         }
         Update: {
           bet_amount?: string
-          created_at?: string
+          chain_id?: number
+          created_at?: string | null
           direction?: number
           entry_price?: number
-          expected_price?: number
+          deadline?: string
           expires_at?: string
           id?: number
           opponent?: string | null
@@ -78,7 +85,9 @@ export type Database = {
           owner?: string
           owner_signature?: string
           settled_price?: number | null
+          target_price?: number
           token?: string
+          nonce: number
         }
         Relationships: []
       }

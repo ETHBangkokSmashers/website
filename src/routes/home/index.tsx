@@ -70,10 +70,17 @@ export default function Home() {
 
   return (
     <div className="px-3">
-      <div className="flex items-center justify-center">
-        <div className="max-w-[700px] py-14 text-center text-6xl font-semibold">
+      <div className="flex flex-col items-center justify-center py-14">
+        <div className="max-w-[700px] text-center text-6xl font-semibold">
           Turn ordinary products into exclusive digital experiences
         </div>
+        <Link className="mt-8" to="/create">
+          <div className="bg-brand flex h-16 cursor-pointer select-none items-center justify-center rounded-2xl px-8 shadow-xl transition">
+            <div className="text-center text-xl font-medium">
+              Create New Order
+            </div>
+          </div>
+        </Link>
       </div>
       <div className="mx-auto max-w-[1024px]">
         <div className="grid gap-3 md:grid-cols-2 md:gap-4 lg:grid-cols-3 lg:gap-6">
