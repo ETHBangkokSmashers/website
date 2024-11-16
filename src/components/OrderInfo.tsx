@@ -3,43 +3,76 @@ import { Link } from "react-router-dom"
 import { generateUsername } from "@/helpers/generateUsername"
 import dayjs from "dayjs"
 import { Tables } from "@/helpers/supabase.types"
+import { formatUnits } from "viem"
+import { chainConfig } from "@/helpers/chainConfig"
+import { useAccount } from "wagmi"
 
 export default function OrderInfo({ data }: { data: Tables<"orders"> }) {
+  const account = useAccount()
+
+  const isMyOrder = account.address?.toLowerCase() === data.owner.toLowerCase()
+  const isExpired = dayjs().isAfter(dayjs(data.expires_at * 1000))
+
+  const betToken =
+    chainConfig[data.chain_id].tokens[data.source_ticker.toLowerCase()]!
+
+  const betAmount = +formatUnits(BigInt(data.bet_amount), betToken.decimals)
+
   return (
     <>
-      <div className="mb-6 flex items-center">
-        <Link to={`/profile/${data.owner}`}>
-          <Avatar className="mr-2 size-7" name={data.owner} variant="beam" />
-        </Link>
-        <Link
-          className="mr-1 font-semibold hover:underline"
-          to={`/profile/${data.owner}`}
-        >
-          {generateUsername(data.owner)}
-        </Link>{" "}
-        bets that
+      <div className="mb-6 flex items-center text-lg">
+        {isMyOrder ? (
+          <div>
+            You bet <span className="font-semibold">${betAmount}</span> that
+          </div>
+        ) : (
+          <>
+            <Link to={`/profile/${data.owner}`}>
+              <Avatar
+                className="mr-2 size-7"
+                name={data.owner}
+                variant="beam"
+              />
+            </Link>
+            <Link
+              className="mr-1 font-semibold hover:underline"
+              to={`/profile/${data.owner}`}
+            >
+              {generateUsername(data.owner)}
+            </Link>{" "}
+            <span className="font-light">
+              bets <span className="font-semibold">${betAmount}</span> that
+            </span>
+          </>
+        )}
       </div>
-      <div className="text-3xl">
-        <span className="font-semibold">BTC</span> will hit{" "}
-        <span className="font-semibold">
-          ${data.target_price.toLocaleString()}
+      <div className="text-3xl font-light">
+        <span className="font-medium">{data.target_ticker.toUpperCase()}</span>{" "}
+        will be{" "}
+        <span className="font-medium">
+          {data.direction === 0 ? "<" : ">"} $
+          {data.target_price.toLocaleString()}
         </span>
-        <br />
-        in {dayjs(data.expires_at * 1000).diff(dayjs(), "days")} days
+        {!isExpired && (
+          <>
+            <br />
+            in {dayjs(data.expires_at * 1000).diff(dayjs(), "days")} days
+          </>
+        )}
       </div>
-      <div className="mt-6">
-        Current BTC price: <span className="font-semibold">$97,000</span>{" "}
-        <span className="font-semibold text-red-400">-$3,000</span>
-      </div>
-      <div className="mt-6">
-        Created:{" "}
-        <span className="font-semibold">
+      {/*<div className="mt-6">*/}
+      {/*  Current BTC price: <span className="font-semibold">$97,000</span>{" "}*/}
+      {/*  <span className="font-semibold text-red-400">-$3,000</span>*/}
+      {/*</div>*/}
+      <div className="mt-6 font-light">
+        <span className="opacity-70">Created:</span>{" "}
+        <span className="font-medium">
           {dayjs(data.created_at).format("MMM DD YYYY HH:mm")}
         </span>
       </div>
-      <div className="mt-2">
-        Ends:{" "}
-        <span className="font-semibold">
+      <div className="mt-2 font-light">
+        <span className="opacity-70">Ends:</span>{" "}
+        <span className="font-medium">
           {dayjs(data.expires_at * 1000).format("MMM DD YYYY HH:mm")}
         </span>
       </div>

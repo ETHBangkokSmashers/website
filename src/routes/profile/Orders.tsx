@@ -17,87 +17,7 @@ import { fireConfetti } from "@/helpers/fireConfetti"
 import { chainConfig } from "@/helpers/chainConfig"
 import { ZERO_ADDRESS, TARGET_TOKENS } from "@/routes/create"
 import eacaAggregatorProxy from "@/helpers/eacaAggregatorProxy"
-
-const useOrderInfo = ({
-  chainId,
-  observationAssetId,
-  expiresAt,
-}: {
-  chainId: number
-  observationAssetId: number
-  expiresAt: number
-}) => {
-  const contractAddress = chainConfig[chainId].tradeEntryAddress!
-
-  const feedAddressTx = useReadContract({
-    chainId,
-    address: contractAddress,
-    abi: tradeEntryABI,
-    functionName: "chainlinkAssetPriceFeeds",
-    args: [observationAssetId],
-  })
-
-  const feedTx = useReadContract({
-    chainId,
-    address: feedAddressTx.data,
-    abi: eacaAggregatorProxy,
-    functionName: "latestRoundData",
-    query: {
-      enabled: !!feedAddressTx.data,
-    },
-  })
-
-  const [roundId, setRoundId] = useState<bigint>()
-  const [targetTokenSettledPrice, setSettledPrice] = useState<number>()
-  const [_isFetching, setFetching] = useState(false)
-
-  const fetchRound = async () => {
-    try {
-      setFetching(true)
-
-      // ATTN targetTokenPrice has 8 decimals!
-      let [roundId, targetTokenSettledPrice, , timestamp] = feedTx.data!
-
-      while (timestamp > expiresAt) {
-        roundId--
-        ;[, targetTokenSettledPrice, , timestamp] = await readContract(
-          wagmiConfig,
-          {
-            chainId: chainId as any,
-            address: feedAddressTx.data!,
-            abi: eacaAggregatorProxy,
-            functionName: "getRoundData",
-            args: [roundId],
-          },
-        )
-      }
-
-      if (roundId) {
-        setRoundId(roundId)
-      }
-
-      if (targetTokenSettledPrice) {
-        setSettledPrice(+formatUnits(targetTokenSettledPrice, 8))
-      }
-    } catch (err) {
-      console.error(err)
-    }
-
-    setFetching(false)
-  }
-
-  useEffect(() => {
-    if (feedTx.data && !targetTokenSettledPrice) {
-      fetchRound()
-    }
-  }, [!!feedTx.data])
-
-  return {
-    isFetching: feedAddressTx.isFetching || feedTx.isFetching || _isFetching,
-    roundId,
-    targetTokenSettledPrice,
-  }
-}
+import { useOrderInfo } from "./utils/useOrderInfo"
 
 function Button({
   children,
@@ -136,7 +56,7 @@ function ClaimButton({
   roundId,
 }: {
   order: Tables<"orders">
-  roundId: bigint
+  roundId: string
 }) {
   const params = useParams()
   const profileAddress = (params.address as string).toLowerCase()
@@ -167,9 +87,6 @@ function ClaimButton({
           return ticker.toLowerCase()
         }).indexOf(order.target_ticker) + 1
 
-      const hexString = numberToHex(roundId)
-      const roundHex = padHex(hexString, { size: 32 })
-
       const txHash = await writeContractAsync({
         address: contractAddress,
         abi: tradeEntryABI,
@@ -189,7 +106,7 @@ function ClaimButton({
             dataSourceId: order.data_source_id,
             nonce: BigInt(order.nonce),
           },
-          roundHex,
+          roundId as any,
         ],
       })
 
@@ -205,7 +122,7 @@ function ClaimButton({
 
       try {
         queryClient.setQueryData<Tables<"orders">[]>(
-          ["profile-active-orders", profileAddress],
+          ["profile-active-orders", profileAddress.toLowerCase()],
           (orders) => {
             if (!orders) return
 
@@ -221,7 +138,9 @@ function ClaimButton({
             })
           },
         )
-      } catch {}
+      } catch (err) {
+        console.error(err)
+      }
 
       await wait(1500)
       fireConfetti()
@@ -236,7 +155,7 @@ function ClaimButton({
     <Button
       className="bg-brand cursor-pointer"
       isDisabled={isButtonDisabled}
-      isLoading={false}
+      isLoading={isSubmitting}
       onClick={() => {
         claim()
       }}
@@ -253,25 +172,15 @@ function SettleButton({
   order: Tables<"orders">
   isMyOrder: boolean
 }) {
-  // TODO rewrite to safety variant
-  const targetTokenId =
-    TARGET_TOKENS.map((ticker) => {
-      return ticker.toLowerCase()
-    }).indexOf(order.target_ticker) + 1
-
-  const { isFetching, roundId, targetTokenSettledPrice } = useOrderInfo({
-    chainId: order.chain_id,
-    observationAssetId: targetTokenId,
-    expiresAt: order.expires_at,
-  })
+  const { isFetching, roundId, targetTokenSettledPrice } = useOrderInfo(order)
 
   let isOrderWin: boolean | undefined
 
   if (targetTokenSettledPrice !== undefined) {
     if (order.direction === 0) {
-      isOrderWin = order.target_price < targetTokenSettledPrice
-    } else {
       isOrderWin = order.target_price > targetTokenSettledPrice
+    } else {
+      isOrderWin = order.target_price < targetTokenSettledPrice
     }
   }
 
@@ -320,25 +229,29 @@ function Order({
   isMyProfile: boolean
 }) {
   const isExpired = dayjs().isAfter(dayjs(data.expires_at * 1000))
+  const isStaled = isExpired && !data.opponent
   const isCancelable = !isExpired && !data.opponent
 
   return (
     <div className="rounded-3xl border border-zinc-300 bg-white p-6 transition hover:border-zinc-400">
       <OrderInfo data={data} />
-      <div className="mt-6 h-14">
-        {isMyProfile &&
-          (isCancelable ? (
+      {isMyProfile && (
+        <div className="mt-6 h-14">
+          {isCancelable ? (
             <CancelButton order={data} />
           ) : isExpired ? (
-            data.is_claimed ? (
+            isStaled ? (
+              <Button className="!cursor-default bg-zinc-100">Staled</Button>
+            ) : data.is_claimed ? (
               <Button className="bg-brand/30 !cursor-default">Claimed</Button>
             ) : (
               <SettleButton order={data} isMyOrder={isMyOrder} />
             )
           ) : (
             <Button className="!cursor-default bg-blue-200">Pending</Button>
-          ))}
-      </div>
+          )}
+        </div>
+      )}
     </div>
   )
 }

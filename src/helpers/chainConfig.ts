@@ -18,7 +18,7 @@ import {
 
 export const chainConfig = {
   [sepolia.id]: {
-    tradeEntryAddress: "0xffE9eea7627C5f268227A12c72393fcA71cA76FB",
+    tradeEntryAddress: "0x8CE9c3a167A6a82Fd8d81877488C873AE181B16f",
     tokens: {
       usdc: {
         address: "0x5d6074b2B8F83E819b1C0957AD4497F0C9e01A21",

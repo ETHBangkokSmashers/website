@@ -16,6 +16,7 @@ import { useApprove } from "@/hooks/useApprove"
 import { fireConfetti } from "@/helpers/fireConfetti"
 import { wait } from "@/helpers/wait"
 import { useNavigate } from "react-router-dom"
+import { CheckIcon, ChevronDown } from "lucide-react"
 
 export const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000"
 
@@ -23,11 +24,6 @@ export const TARGET_TOKENS = ["BTC", "ETH"]
 const BET_TOKENS = ["USDC", "USDT"]
 const DIRECTIONS = ["above", "below"]
 const DURATIONS = ["3 min", "3 days", "1 week"]
-
-const DATA_SOURCES = [
-  { name: "CHAINLINK", sourceId: 1 },
-  { name: "PYTH", sourceId: 2 },
-]
 
 const getNonce = (() => {
   let initial = Date.now()
@@ -69,13 +65,120 @@ function Selector2({
             <ListboxOption
               key={item}
               value={item}
-              className="cursor-pointer rounded-xl bg-zinc-100 p-3 text-2xl shadow data-[focus]:bg-blue-100"
+              className="min-w-full cursor-pointer rounded-xl bg-zinc-100 px-5 py-3.5 text-xl shadow data-[focus]:bg-blue-100"
             >
               {item}
             </ListboxOption>
           ))}
       </ListboxOptions>
     </Listbox>
+  )
+}
+
+function PriceFeedProviderCard({
+  image,
+  isActive,
+  onClick,
+}: {
+  image: string
+  isActive: boolean
+  onClick(): void
+}) {
+  return (
+    <div
+      className={cx(
+        "relative mt-5 flex h-20 items-center justify-center rounded-xl border-2 border-zinc-300 p-3 opacity-40 transition",
+        {
+          "cursor-default !opacity-100": isActive,
+          "cursor-pointer hover:opacity-100": !isActive,
+        },
+      )}
+      onClick={onClick}
+    >
+      <div
+        className={cx(
+          "bg-brand absolute right-2 top-2 flex size-7 items-center justify-center rounded-full opacity-0 transition",
+          {
+            "opacity-100": isActive,
+          },
+        )}
+      >
+        <CheckIcon className="size-4" strokeWidth={2} />
+      </div>
+      <img className="h-12" src={image} alt="" />
+    </div>
+  )
+}
+
+function AdvancedSettings({
+  priceFeedProviderId,
+  onProviderChange,
+}: {
+  priceFeedProviderId: number
+  onProviderChange(providerId: number): void
+}) {
+  const [isExpanded, setExpanded] = useState(false)
+
+  return (
+    <div className="mt-8 flex justify-center">
+      <div
+        className={cx(
+          "rounded-3xl bg-transparent px-8 py-5 transition-all duration-1000 ease-in-out",
+          {
+            "!bg-zinc-50": isExpanded,
+          },
+        )}
+      >
+        <div
+          className={cx(
+            "h-0 w-[600px] overflow-hidden opacity-0 transition-all duration-1000",
+            {
+              "h-[230px] opacity-100": isExpanded,
+            },
+          )}
+        >
+          <div className="grid grid-cols-2">
+            <div className="">
+              <div className="text-xl font-semibold">
+                Selected Price Feed Provider
+              </div>
+              <div className="mt-5 space-y-1.5">
+                <PriceFeedProviderCard
+                  image="/images/chainlink.svg"
+                  isActive={priceFeedProviderId === 1}
+                  onClick={() => {
+                    onProviderChange(1)
+                  }}
+                />
+                <PriceFeedProviderCard
+                  image="/images/pyth.svg"
+                  isActive={priceFeedProviderId === 2}
+                  onClick={() => {
+                    onProviderChange(2)
+                  }}
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+        <div className="flex justify-center">
+          <div
+            className="flex cursor-pointer items-center rounded-xl px-3 py-1.5 pl-3.5 transition hover:bg-zinc-100"
+            onClick={() => {
+              setExpanded((v) => !v)
+            }}
+          >
+            <div className="">Advanced Settings</div>
+            <ChevronDown
+              className={cx("ml-2 size-4 transition duration-300", {
+                "rotate-180": isExpanded,
+              })}
+              strokeWidth={2}
+            />
+          </div>
+        </div>
+      </div>
+    </div>
   )
 }
 
@@ -90,8 +193,8 @@ export default function Create() {
     return chain.id === chainId
   })!
 
-  const [betAmount, setBetAmount] = useState(100)
-  const [dataSource, setDataSource] = useState(DATA_SOURCES[0])
+  const [betAmount, setBetAmount] = useState(66)
+  const [priceFeedProviderId, setPriceFeedProviderId] = useState(1)
   const [direction, setDirection] = useState(DIRECTIONS[0])
   const [duration, setDuration] = useState(DURATIONS[0])
   const [targetTokenTicker, setTargetToken] = useState(TARGET_TOKENS[0])
@@ -141,17 +244,16 @@ export default function Create() {
 
       if (duration === "3 min") {
         expNum = 3
-        expStr = "min"
+        expStr = "minutes"
       } else if (duration === "3 days") {
         expNum = 3
         expStr = "days"
       } else {
         expNum = 1
-        expStr = "week"
+        expStr = "weeks"
       }
 
       const deadline = dayjs.utc().add(10, "days").unix()
-
       const expiresAt = dayjs
         .utc()
         .add(expNum, expStr as any)
@@ -201,7 +303,7 @@ export default function Create() {
           observationAssetId: targetTokenId,
           direction: directionNum,
           price: parseUnits(String(targetPrice), 18),
-          dataSourceId: dataSource.sourceId,
+          dataSourceId: priceFeedProviderId,
           nonce: BigInt(nonce),
         },
       })
@@ -221,7 +323,7 @@ export default function Create() {
             owner_signature: signature,
             target_ticker: targetTokenTicker.toLowerCase(),
             source_ticker: betTokenTicker.toLowerCase(),
-            data_source_id: dataSource.sourceId,
+            data_source_id: priceFeedProviderId,
             nonce,
           },
         ])
@@ -287,7 +389,13 @@ export default function Create() {
             />
           </div>
         </div>
-        <div className="relative mt-20 flex items-center gap-6">
+
+        <AdvancedSettings
+          priceFeedProviderId={priceFeedProviderId}
+          onProviderChange={setPriceFeedProviderId}
+        />
+
+        <div className="relative mt-12 flex items-center gap-6">
           <div
             className={cx(
               "flex h-14 cursor-pointer select-none items-center justify-center rounded-2xl bg-black px-8 shadow-xl transition",

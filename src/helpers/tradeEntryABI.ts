@@ -53,7 +53,17 @@ export default [
   },
   {
     inputs: [],
+    name: "InvalidPythResponse",
+    type: "error",
+  },
+  {
+    inputs: [],
     name: "InvalidSignature",
+    type: "error",
+  },
+  {
+    inputs: [],
+    name: "LengthMismatch",
     type: "error",
   },
   {
@@ -102,6 +112,22 @@ export default [
       },
     ],
     name: "SafeCastOverflowedIntToUint",
+    type: "error",
+  },
+  {
+    inputs: [
+      {
+        internalType: "uint8",
+        name: "bits",
+        type: "uint8",
+      },
+      {
+        internalType: "uint256",
+        name: "value",
+        type: "uint256",
+      },
+    ],
+    name: "SafeCastOverflowedUintDowncast",
     type: "error",
   },
   {
@@ -425,6 +451,42 @@ export default [
     type: "function",
   },
   {
+    inputs: [
+      {
+        internalType: "uint32[]",
+        name: "assetIds",
+        type: "uint32[]",
+      },
+      {
+        internalType: "address[]",
+        name: "feedAddresses",
+        type: "address[]",
+      },
+    ],
+    name: "configureChainlinkFeeds",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
+    inputs: [
+      {
+        internalType: "uint32[]",
+        name: "assetIds",
+        type: "uint32[]",
+      },
+      {
+        internalType: "bytes32[]",
+        name: "feedIds",
+        type: "bytes32[]",
+      },
+    ],
+    name: "configurePythFeeds",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
     inputs: [],
     name: "eip712Domain",
     outputs: [
@@ -489,6 +551,38 @@ export default [
   },
   {
     inputs: [],
+    name: "pyth",
+    outputs: [
+      {
+        internalType: "contract IPyth",
+        name: "",
+        type: "address",
+      },
+    ],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [
+      {
+        internalType: "uint32",
+        name: "",
+        type: "uint32",
+      },
+    ],
+    name: "pythAssetFeedIds",
+    outputs: [
+      {
+        internalType: "bytes32",
+        name: "",
+        type: "bytes32",
+      },
+    ],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [],
     name: "renounceOwnership",
     outputs: [],
     stateMutability: "nonpayable",
@@ -497,9 +591,9 @@ export default [
   {
     inputs: [
       {
-        internalType: "uint32",
-        name: "assetId",
-        type: "uint32",
+        internalType: "uint32[]",
+        name: "assetIds",
+        type: "uint32[]",
       },
       {
         internalType: "uint8",
@@ -512,7 +606,7 @@ export default [
         type: "bool",
       },
     ],
-    name: "setAssetDataSourceAllowed",
+    name: "setAssetsDataSourceAllowed",
     outputs: [],
     stateMutability: "nonpayable",
     type: "function",
@@ -520,17 +614,12 @@ export default [
   {
     inputs: [
       {
-        internalType: "uint32",
-        name: "assetId",
-        type: "uint32",
-      },
-      {
-        internalType: "address",
-        name: "feedAddress",
+        internalType: "contract IPyth",
+        name: "_pyth",
         type: "address",
       },
     ],
-    name: "setChainlinkAssetPriceFeed",
+    name: "setPyth",
     outputs: [],
     stateMutability: "nonpayable",
     type: "function",
@@ -623,7 +712,7 @@ export default [
         type: "uint256",
       },
     ],
-    stateMutability: "nonpayable",
+    stateMutability: "payable",
     type: "function",
   },
   {

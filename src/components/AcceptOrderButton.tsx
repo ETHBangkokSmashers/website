@@ -39,10 +39,7 @@ export default function AcceptOrderButton({
   const [isSubmitting, setSubmitting] = useState(false)
 
   const isButtonDisabled =
-    !publicClient ||
-    !account.address ||
-    isApproveRequired ||
-    allowanceTx.data === undefined
+    !publicClient || !account.address || allowanceTx.data === undefined
 
   const submit = async () => {
     if (isButtonDisabled || isSubmitting) {
@@ -113,10 +110,14 @@ export default function AcceptOrderButton({
       className={cx(
         "bg-brand mt-6 flex h-14 cursor-pointer select-none items-center justify-center rounded-2xl px-4 transition",
         {
-          "cursor-not-allowed opacity-20": isButtonDisabled,
+          "!cursor-not-allowed opacity-20": isButtonDisabled,
         },
       )}
       onClick={() => {
+        if (isButtonDisabled) {
+          return
+        }
+
         if (isApproveRequired) {
           approveAndSubmit()
         } else {
@@ -127,12 +128,14 @@ export default function AcceptOrderButton({
       {(isApproving || isSubmitting) && (
         <Spinner className="mr-4 size-6 fill-black text-black/20" />
       )}
-      <div className="text-center text-lg font-medium">
+      <div className="text-center text-xl font-light">
         {isApproveRequired ? (
           "Approve Spending"
         ) : (
           <>
-            Bet <b>${betAmount.toLocaleString()}</b> against
+            Bet{" "}
+            <span className="font-semibold">${betAmount.toLocaleString()}</span>{" "}
+            against
           </>
         )}
       </div>
