@@ -12,17 +12,17 @@ export default defineConfig({
       "@": path.resolve(__dirname, "src"),
     },
   },
-  optimizeDeps: {
-    esbuildOptions: {
-      // Enable esbuild polyfill plugins
-      plugins: [
-        NodeGlobalsPolyfillPlugin({
-          process: true,
-        }),
-        NodeModulesPolyfillPlugin(),
-      ],
-    },
-  },
+  // optimizeDeps: {
+  //   esbuildOptions: {
+  //     // Enable esbuild polyfill plugins
+  //     plugins: [
+  //       NodeGlobalsPolyfillPlugin({
+  //         process: true,
+  //       }),
+  //       NodeModulesPolyfillPlugin(),
+  //     ],
+  //   },
+  // },
   build: {
     rollupOptions: {
       output: {
