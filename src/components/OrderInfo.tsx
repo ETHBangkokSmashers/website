@@ -20,10 +20,10 @@ export default function OrderInfo({ data }: { data: Tables<"orders"> }) {
 
   return (
     <>
-      <div className="mb-6 flex items-center text-lg">
+      <div className="mb-6 flex items-center text-xl">
         {isMyOrder ? (
-          <div>
-            You bet <span className="font-semibold">${betAmount}</span> that
+          <div className="font-light">
+            You bet <span className="font-medium">${betAmount}</span> that
           </div>
         ) : (
           <>
@@ -46,13 +46,22 @@ export default function OrderInfo({ data }: { data: Tables<"orders"> }) {
           </>
         )}
       </div>
-      <div className="text-3xl font-light">
-        <span className="font-medium">{data.target_ticker.toUpperCase()}</span>{" "}
-        will be{" "}
-        <span className="font-medium">
+      <div className="flex items-center gap-2 text-3xl font-light">
+        <div className="inline-flex items-center">
+          <img
+            className="mr-2 size-7 flex-none"
+            src={`/images/${data.target_ticker.toLowerCase()}.svg`}
+            alt=""
+          />
+          <span className="font-medium">
+            {data.target_ticker.toUpperCase()}
+          </span>
+        </div>{" "}
+        <div>will be</div>
+        <div className="font-medium">
           {data.direction === 0 ? "<" : ">"} $
           {data.target_price.toLocaleString()}
-        </span>
+        </div>
         {!isExpired && (
           <>
             <br />

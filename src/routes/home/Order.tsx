@@ -14,7 +14,7 @@ export default function Order({
       <OrderInfo data={data} />
       <div className="mt-6">
         {isMy ? (
-          <div className="flex h-14 cursor-default select-none items-center justify-center rounded-2xl bg-zinc-200 px-4 transition">
+          <div className="flex h-14 cursor-default select-none items-center justify-center rounded-2xl bg-zinc-100 px-4 transition">
             <div className="text-center text-lg font-medium">
               It's your order
             </div>

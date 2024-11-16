@@ -87,7 +87,10 @@ export default function AcceptOrderButton({
 
       const { data, error } = await supabase
         .from("orders")
-        .update({ opponent: account.address!.toLowerCase() })
+        .update({
+          opponent: account.address!.toLowerCase(),
+          tx_hash: txHash,
+        })
         .eq("id", order.id)
         .select()
 

@@ -22,7 +22,7 @@ export const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000"
 
 export const TARGET_TOKENS = ["BTC", "ETH"]
 const BET_TOKENS = ["USDC", "USDT"]
-const DIRECTIONS = ["above", "below"]
+const DIRECTIONS = [">", "<"]
 const DURATIONS = ["3 min", "3 days", "1 week"]
 
 const getNonce = (() => {
@@ -32,18 +32,21 @@ const getNonce = (() => {
 
 function Selector({ children }: any) {
   return (
-    <div className="group relative inline-flex cursor-pointer">
-      <div className="bg-brand relative z-[2] rounded-xl p-3">{children}</div>
-      <div className="border-brand absolute inset-1 z-[1] rounded-2xl border-2 opacity-0 transition-all group-hover:-inset-1 group-hover:opacity-100"></div>
+    <div className="hover:bg-brand group -mx-2 cursor-pointer rounded-2xl px-2 py-1 font-normal transition">
+      <div className="border-b-2 border-dotted border-black border-opacity-50 transition group-hover:border-opacity-0">
+        {children}
+      </div>
     </div>
   )
 }
 
 function Selector2({
+  children,
   items,
   selected,
   onChange,
 }: {
+  children?: any
   items: string[]
   selected: string
   onChange(value: any): void
@@ -51,7 +54,7 @@ function Selector2({
   return (
     <Listbox value={selected} onChange={onChange}>
       <ListboxButton>
-        <Selector>{selected}</Selector>
+        {children || <Selector>{selected}</Selector>}
       </ListboxButton>
       <ListboxOptions
         className="mt-1 space-y-1 !overflow-visible"
@@ -89,7 +92,7 @@ function PriceFeedProviderCard({
       className={cx(
         "relative mt-5 flex h-20 items-center justify-center rounded-xl border-2 border-zinc-300 p-3 opacity-40 transition",
         {
-          "cursor-default !opacity-100": isActive,
+          "cursor-default border-black !opacity-100": isActive,
           "cursor-pointer hover:opacity-100": !isActive,
         },
       )}
@@ -103,7 +106,7 @@ function PriceFeedProviderCard({
           },
         )}
       >
-        <CheckIcon className="size-4" strokeWidth={2} />
+        <CheckIcon className="size-4.5" strokeWidth={3} />
       </div>
       <img className="h-12" src={image} alt="" />
     </div>
@@ -193,8 +196,8 @@ export default function Create() {
     return chain.id === chainId
   })!
 
-  const [betAmount, setBetAmount] = useState(66)
-  const [priceFeedProviderId, setPriceFeedProviderId] = useState(1)
+  const [betAmount, setBetAmount] = useState(100)
+  const [priceFeedProviderId, setPriceFeedProviderId] = useState(2)
   const [direction, setDirection] = useState(DIRECTIONS[0])
   const [duration, setDuration] = useState(DURATIONS[0])
   const [targetTokenTicker, setTargetToken] = useState(TARGET_TOKENS[0])
@@ -230,7 +233,7 @@ export default function Create() {
       setSubmitting(true)
 
       const nonce = getNonce()
-      const directionNum = direction === "below" ? 0 : 1
+      const directionNum = direction === "<" ? 0 : 1
       const entryPrice = 92000
       const targetPrice = 100000
 
@@ -324,6 +327,7 @@ export default function Create() {
             target_ticker: targetTokenTicker.toLowerCase(),
             source_ticker: betTokenTicker.toLowerCase(),
             data_source_id: priceFeedProviderId,
+            tx_hash: null,
             nonce,
           },
         ])
@@ -342,15 +346,13 @@ export default function Create() {
   return (
     <div className="mx-auto">
       <div className="relative flex h-[calc(100vh-136px)] flex-col items-center justify-center">
-        <div className="flex items-center gap-3 text-3xl">
+        <div className="flex items-center gap-3 text-[40px] font-light leading-[44px]">
           <div className="flex items-center gap-3">
             <div>I bet</div>
             <div className="pt-9">
-              <div className="rounded-2xl bg-zinc-50 p-1.5">
+              <div className="rounded-2xl bg-zinc-50 px-3 py-1.5">
                 <div className="relative z-[2] flex items-center gap-1.5">
-                  <div className="bg-brand rounded-xl p-3 shadow">
-                    {betAmount}
-                  </div>
+                  <Selector>{betAmount}</Selector>
                   <Selector2
                     items={BET_TOKENS}
                     selected={betTokenTicker}
@@ -369,7 +371,18 @@ export default function Create() {
               items={TARGET_TOKENS}
               selected={targetTokenTicker}
               onChange={setTargetToken}
-            />
+            >
+              <div className="hover:bg-brand group -mx-2 cursor-pointer rounded-2xl px-2 py-1 font-normal transition">
+                <div className="flex items-center border-b-2 border-dotted border-black border-opacity-50 transition group-hover:border-opacity-0">
+                  <img
+                    className="mr-2 size-8 flex-none"
+                    src={`/images/${targetTokenTicker.toLowerCase()}.svg`}
+                    alt=""
+                  />
+                  <div className="">{targetTokenTicker.toUpperCase()}</div>
+                </div>
+              </div>
+            </Selector2>
           </div>
           <div className="flex items-center gap-3">
             <div>will&nbsp;be</div>

@@ -55,6 +55,7 @@ export type Database = {
           data_source_id: number
           nonce: number
           is_claimed: boolean
+          tx_hash: string | null
         }
         Insert: {
           bet_amount: string
@@ -76,6 +77,7 @@ export type Database = {
           data_source_id: number
           nonce: number
           is_claimed?: boolean
+          tx_hash: string | null
         }
         Update: {
           bet_amount?: string
@@ -97,6 +99,7 @@ export type Database = {
           data_source_id?: number
           nonce?: number
           is_claimed?: boolean
+          tx_hash?: string
         }
         Relationships: []
       }
