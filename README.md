@@ -53,6 +53,9 @@ Our project demonstrates how decentralized prediction markets can be built with 
 Feel free to explore, contribute, and build upon our work!
 
 
+---
+---
+
 # TO LAUNCH: React + TypeScript + Vite
 
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
