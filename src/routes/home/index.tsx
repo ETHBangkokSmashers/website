@@ -33,7 +33,11 @@ export default function Home() {
         </Link>
       </div>
       {!query.isFetching && !query.data?.length ? (
-        <div className="">Nothing to show</div>
+        <div className="flex h-[200px] items-center justify-center rounded-3xl bg-zinc-100">
+          <div className="text-2xl opacity-60">
+            Be the first! Create an Order!
+          </div>
+        </div>
       ) : (
         <div className="grid gap-3 pb-10 md:grid-cols-2 md:gap-4 lg:grid-cols-3 lg:gap-6">
           {query.isFetching

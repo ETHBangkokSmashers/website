@@ -9,6 +9,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { DynamicWagmiConnector } from "@dynamic-labs/wagmi-connector"
 import { DynamicContextProvider } from "@dynamic-labs/sdk-react-core"
 import { EthereumWalletConnectors } from "@dynamic-labs/ethereum"
+import { mergeNetworks } from "@dynamic-labs/sdk-react-core"
 import { WagmiProvider } from "wagmi"
 import { wagmiConfig } from "@/helpers/wagmiConfig"
 import ReactDOM from "react-dom/client"
@@ -23,6 +24,7 @@ import Layout from "@/components/Layout"
 import HomePage from "@/routes/home"
 import ProfilePage from "@/routes/profile"
 import CreatePage from "@/routes/create"
+import { customNetworks } from "@/helpers/customNetworks"
 
 dayjs.extend(utc)
 dayjs.extend(relativeTime)
@@ -44,6 +46,9 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
     settings={{
       environmentId: "5a3a21a8-24d0-4f16-808c-cc9c43b6da03",
       walletConnectors: [EthereumWalletConnectors],
+      overrides: {
+        evmNetworks: (networks) => mergeNetworks(customNetworks, networks),
+      },
     }}
   >
     <WagmiProvider config={wagmiConfig}>
