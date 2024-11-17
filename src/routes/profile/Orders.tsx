@@ -213,7 +213,7 @@ function CancelButton({ order }: { order: Tables<"orders"> }) {
   }
 
   return (
-    <Button className="bg-red-100" isLoading={false}>
+    <Button className="cursor-pointer bg-red-100" isLoading={false}>
       Cancel
     </Button>
   )
@@ -351,7 +351,7 @@ export default function Orders() {
           <div className="text-2xl opacity-60">Nothing to show</div>
         </div>
       ) : (
-        <div className="grid gap-3 pb-10 md:grid-cols-2 md:gap-4 lg:grid-cols-2 lg:gap-6">
+        <div className="grid gap-3 pb-10 lg:grid-cols-2">
           {isFetching
             ? new Array(6).fill(null).map((_, index) => {
                 return (

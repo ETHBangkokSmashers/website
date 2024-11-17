@@ -134,17 +134,17 @@ function AdvancedSettings({
       >
         <div
           className={cx(
-            "h-0 w-[600px] overflow-hidden opacity-0 transition-all duration-1000",
+            "h-0 w-full max-w-[600px] overflow-hidden opacity-0 transition-all duration-1000",
             {
               "h-[230px] opacity-100": isExpanded,
             },
           )}
         >
+          <div className="text-lg font-semibold lg:text-xl">
+            Selected Price Feed Provider
+          </div>
           <div className="grid grid-cols-2">
             <div className="">
-              <div className="text-xl font-semibold">
-                Selected Price Feed Provider
-              </div>
               <div className="mt-5 space-y-1.5">
                 <PriceFeedProviderCard
                   image="/images/chainlink.svg"
@@ -345,8 +345,8 @@ export default function Create() {
 
   return (
     <div className="mx-auto">
-      <div className="relative flex h-[calc(100vh-136px)] flex-col items-center justify-center">
-        <div className="flex items-center gap-3 text-[40px] font-light leading-[44px]">
+      <div className="relative flex flex-col items-center justify-center lg:h-[calc(100vh-136px)]">
+        <div className="flex flex-col items-center gap-3 text-[40px] font-light leading-[44px] lg:flex-row">
           <div className="flex items-center gap-3">
             <div>I bet</div>
             <div className="pt-9">

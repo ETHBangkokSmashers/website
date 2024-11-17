@@ -14,7 +14,7 @@ export default function Layout() {
           MarketMinds
         </Link>
         {!!address && (
-          <div className="flex items-center gap-10 text-lg">
+          <div className="absolute top-16 flex items-center gap-10 text-lg md:relative md:top-0">
             <Link className="" to={`/create`}>
               Create New Order
             </Link>

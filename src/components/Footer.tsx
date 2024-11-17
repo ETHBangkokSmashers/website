@@ -90,10 +90,10 @@ const chains = [
 export default function Footer() {
   return (
     <div className="mt-24">
-      <div className="mb-8 text-center text-4xl font-medium">
+      <div className="mb-8 px-5 text-center text-3xl font-medium md:text-4xl">
         "The path of decentralization is the only true path" (с)
       </div>
-      <div className="grid grid-cols-3 gap-2 px-5 pb-5">
+      <div className="grid gap-2 px-5 pb-5 md:grid-cols-2 lg:grid-cols-3">
         {chains.map(({ title, contractAddress, scanEndpoint }) => {
           return (
             <a

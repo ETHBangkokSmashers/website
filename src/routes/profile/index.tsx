@@ -13,28 +13,28 @@ export default function Profile() {
   const isMyProfile = account.address?.toLowerCase() === address
 
   return (
-    <div className="grid grid-cols-[400px_auto] gap-16 px-5 pt-10">
-      <div className="self-start rounded-3xl border border-zinc-200 p-3 shadow-lg">
+    <div className="grid gap-16 px-5 pt-10 xl:grid-cols-[400px_auto]">
+      <div className="flex self-start rounded-3xl border border-zinc-200 p-3 shadow-lg xl:flex-col">
         <div className="flex items-center p-5">
           <Avatar className="mr-6 size-[100px]" name={address} variant="beam" />
           <div className="text-2xl font-medium">
             {generateUsername(address)}
           </div>
         </div>
-        <div className="mt-4 grid grid-cols-2 gap-2">
+        <div className="ml-auto grid grid-cols-2 gap-2 xl:mt-4">
           <div className="rounded-2xl bg-zinc-100 p-4">
             <div className="flex items-center">
-              <HandshakeIcon className="mr-2 size-5 flex-none" />
-              <div className="whitespace-nowrap">Deals</div>
+              <HandshakeIcon className="mr-3 size-6 flex-none" />
+              <div className="whitespace-nowrap text-xl">Deals</div>
             </div>
-            <div className="mt-4 text-3xl">15</div>
+            <div className="mt-4 text-3xl font-medium">15</div>
           </div>
           <div className="rounded-2xl bg-lime-200 p-4">
             <div className="flex items-center">
-              <CoinsIcon className="mr-2 size-5 flex-none" />
-              <div className="whitespace-nowrap">Profit</div>
+              <CoinsIcon className="mr-3 size-6 flex-none" />
+              <div className="whitespace-nowrap text-xl">Profit</div>
             </div>
-            <div className="mt-4 text-3xl">+$1,000</div>
+            <div className="mt-4 text-3xl font-medium">+$1,000</div>
           </div>
         </div>
       </div>

@@ -46,7 +46,7 @@ export default function OrderInfo({ data }: { data: Tables<"orders"> }) {
           </>
         )}
       </div>
-      <div className="flex items-center gap-2 text-3xl font-light">
+      <div className="flex flex-wrap items-center gap-2 text-3xl font-light">
         <div className="inline-flex items-center">
           <img
             className="mr-2 size-7 flex-none"
